@@ -65,13 +65,13 @@ double tlFunc( Lgm_Vector *P, double R0, Lgm_MagModelInfo *Info ){
 
 int Lgm_TraceLine( Lgm_Vector *u, Lgm_Vector *v, double H0, double sgn, double tol, int AddBminPoint, Lgm_MagModelInfo *Info ) {
 
-    Lgm_Vector	u_scale;
-    double	    Htry, Hdid, htry, hdid, Hnext, Hmin, Hmax, s, ss;
-    double	    Sa=0.0, Sc=0.0, d;
-    double	    R0, R, Fa, Fb, Fc, F;
-    double	    Ra, Rb, Rc;
-    Lgm_Vector	Pa, Pc, P, Bvec, Bcdip;
-    int		    done, reset, n, SavePnt, Count;
+    Lgm_Vector u_scale;
+    double Htry, Hdid, htry, hdid, Hnext, Hmin, Hmax, s, ss;
+    double Sa=0.0, Sc=0.0, d;
+    double R0, R, Fa, Fb, Fc, F;
+    double Ra, Rb, Rc;
+    Lgm_Vector Pa, Pc, P, Bvec, Bcdip;
+    int done, reset, n, SavePnt, Count;
 
 
     reset = TRUE;
@@ -114,10 +114,8 @@ int Lgm_TraceLine( Lgm_Vector *u, Lgm_Vector *v, double H0, double sgn, double t
     ++n;
     Info->nPnts = n;
     if (n > LGM_MAX_INTERP_PNTS){
-	    printf("Warning: n > LGM_MAX_INTERP_PNTS (%d)\n", LGM_MAX_INTERP_PNTS);
+        printf("Warning: n > LGM_MAX_INTERP_PNTS (%d)\n", LGM_MAX_INTERP_PNTS);
     }
-
-
 
     /*
      *   Add code to check to see if the start point is already below the target height.
@@ -139,7 +137,10 @@ int Lgm_TraceLine( Lgm_Vector *u, Lgm_Vector *v, double H0, double sgn, double t
         Htry  = ( fabs(F) < 0.1 ) ? 0.5*fabs(F) : 0.1;
         Count = 0;
         while ( !done ) {
-            if ( Lgm_MagStep( &P, &u_scale, Htry, &Hdid, &Hnext, sgn, &s, &reset, Info->Bfield, Info ) < 0 ) { printf("BAILING 1\n"); return(-1);}
+            if ( Lgm_MagStep( &P, &u_scale, Htry, &Hdid, &Hnext, sgn, &s, &reset, Info->Bfield, Info ) < 0 ) {
+                printf("BAILING 1\n");
+                return(-1);
+            }
             ss += Hdid;  // Note that we should trap conditions where Hdid != Htry since this will be a problem...
             R = Lgm_Magnitude( &P );
             F = R - R0;
@@ -182,13 +183,7 @@ int Lgm_TraceLine( Lgm_Vector *u, Lgm_Vector *v, double H0, double sgn, double t
             ++n;
             Info->nPnts = n;
         }
-
     }
-
-
-
-
-
 
     Pa   = P;
     Ra   = Lgm_Magnitude( &Pa );
@@ -207,8 +202,7 @@ int Lgm_TraceLine( Lgm_Vector *u, Lgm_Vector *v, double H0, double sgn, double t
     //reset   = TRUE;
     SavePnt = TRUE;
     Htry = Info->Hmax;  // we want to step with constant increments.
-    while ( !done ) {
-
+    while (!done) {
         /* 
          * We want to make sure that we actually do a step of Htry, so keep
          * trying until we get there.
@@ -232,30 +226,27 @@ int Lgm_TraceLine( Lgm_Vector *u, Lgm_Vector *v, double H0, double sgn, double t
             return(-1);
         }
 
-
-
-
         R = Lgm_Magnitude( &P );
-	    F =  R - R0;
-
-	    if (   (P.x > Info->OpenLimit_xMax) || (P.x < Info->OpenLimit_xMin) || (P.y > Info->OpenLimit_yMax) || (P.y < Info->OpenLimit_yMin)
-	        || (P.z > Info->OpenLimit_zMax) || (P.z < Info->OpenLimit_zMin) || (s > 1000.0) ) {
-	        /*
-	         *  Open FL!
-	         */
-	        v->x = v->y = v->z = 0.0;
-	        return(0);
-	    } else if ( (F < 0.0)&&(ss>0.01) ){
-	        done = TRUE;
-	        Pc = P;
-	        Rc = R;
-	        Fc = F;
-	        Sc = Sa + Hdid;
-	    } else {
-	        Pa = P;
-	        Fa = F;
-	        Ra = R;
-	        Sa = 0.0;
+        F =  R - R0;
+        if ((P.x > Info->OpenLimit_xMax) || (P.x < Info->OpenLimit_xMin) ||
+            (P.y > Info->OpenLimit_yMax) || (P.y < Info->OpenLimit_yMin) ||
+            (P.z > Info->OpenLimit_zMax) || (P.z < Info->OpenLimit_zMin) || (s > 1000.0) ) {
+            /*
+             *  Open FL!
+             */
+            v->x = v->y = v->z = 0.0;
+            return(0);
+        } else if ( (F < 0.0)&&(ss>0.01) ){
+            done = TRUE;
+            Pc = P;
+            Rc = R;
+            Fc = F;
+            Sc = Sa + Hdid;
+        } else {
+            Pa = P;
+            Fa = F;
+            Ra = R;
+            Sa = 0.0;
             ss += Hdid;
             /*
              * Compute field strength and save the results in the array.
@@ -281,11 +272,9 @@ int Lgm_TraceLine( Lgm_Vector *u, Lgm_Vector *v, double H0, double sgn, double t
                 printf("File: %s  Lgm_TraceLine(), Line: %d; Trying to add too many points to interpolation arrays - bailing (n = %d). Current position on FL: %g %g %g\n", __FILE__, __LINE__, n, P.x, P.y, P.z);
                 return( -1 );
             }
-	    }
+        }
 
-
-
-	    /*
+        /*
          *  We have been stepping along at a constant Htry. But when we get
          *  close to the end we do not want to drop below the surface of the
          *  Earth -- some models crash and burn if you do that. To make sure we
@@ -298,13 +287,13 @@ int Lgm_TraceLine( Lgm_Vector *u, Lgm_Vector *v, double H0, double sgn, double t
          *  points.  The final point will be the actual end of the FL. (I.e. we
          *  dont want all of these smaller steps cluttering up our array at the
          *  end.)
-	     */
+         */
         if ( Htry > (R-1.0) ) {
             Htry = 0.5*(R-1.0);
             SavePnt = FALSE;
          } else {
             SavePnt = TRUE;
-	     }
+         }
 
     }
 
@@ -325,12 +314,10 @@ int Lgm_TraceLine( Lgm_Vector *u, Lgm_Vector *v, double H0, double sgn, double t
 if (0==1){
     done  = FALSE;
     while (!done) {
-
-	    d = Sc - Sa;
-	    if ( fabs(d) < tol ) {
-	        done = TRUE;
-	    } else {
-
+        d = Sc - Sa;
+        if ( fabs(d) < tol ) {
+            done = TRUE;
+        } else {
             P = Pa; Htry = 0.5*d;
             if ( Lgm_MagStep( &P, &u_scale, Htry, &Hdid, &Hnext, sgn, &s, &reset, Info->Bfield, Info ) < 0 ) { printf("BAILING 3\n");return(-1);}
             R = Lgm_Magnitude( &P );
@@ -340,7 +327,7 @@ if (0==1){
             } else {
                 Pc = P; Fc = F; Sc = Sa + Hdid;
             }
-	    }
+        }
     }
 }
 if (1==1){
@@ -402,30 +389,21 @@ if (1==1){
     Info->ds        = Info->Hmax;              // spacing in s for the array -- will help to know this
                                                // when trying to interpolate.
 
-
-
-
-
-
-
     /*
      *  Add the Smin, Bmin point. Only do this if AddBminPoint is TRUE
      *  This will only make sense if these values are legitimate for this FL.
      *  Perhaps it would be better to force user to do this elesewhere.
      */
-    if ( AddBminPoint ) {
-        printf("1) ADDING NEW POINT\n");
+    if (AddBminPoint) {
+        if (Info->VerbosityLevel > 1) printf("1) ADDING NEW POINT\n");
         // MUST ADD Bcdip for this too!
         AddNewPoint( Info->Smin, Info->Bmin, &Info->Pmin, Info );
     }
     //printf("1) F >>>>>>>>> Info->nPnts = %d <<<<<<<<<<\n", Info->nPnts);
 
-
-    if ( Info->VerbosityLevel > 2 ) printf("Lgm_TraceLine(): Number of Bfield evaluations = %ld\n", Info->Lgm_nMagEvals );
+    if (Info->VerbosityLevel > 2) printf("Lgm_TraceLine(): Number of Bfield evaluations = %ld\n", Info->Lgm_nMagEvals );
 
     return( 1 );
-
-
 }
 
 
@@ -435,13 +413,13 @@ if (1==1){
  */
 int Lgm_TraceLine2( Lgm_Vector *u, Lgm_Vector *v, double H0, double MinDist, double sgn, double tol, int AddBminPoint, Lgm_MagModelInfo *Info ) {
 
-    Lgm_Vector	u_scale;
-    double	    Htry, Hdid, htry, hdid, Hnext, Hmin, Hmax, s, ss;
-    double	    Sa=0.0, Sc=0.0, d;
-    double	    R0, R, Fa, Fb, Fc, F;
-    double	    Ra, Rb, Rc;
-    Lgm_Vector	Pa, Pc, P, Bvec, Bcdip;
-    int		    done, reset, n, m, SavePnt, Count;
+    Lgm_Vector u_scale;
+    double Htry, Hdid, htry, hdid, Hnext, Hmin, Hmax, s, ss;
+    double Sa=0.0, Sc=0.0, d;
+    double R0, R, Fa, Fb, Fc, F;
+    double Ra, Rb, Rc;
+    Lgm_Vector Pa, Pc, P, Bvec, Bcdip;
+    int done, reset, n, m, SavePnt, Count;
 
 //printf("u = %g %g %g\n", u->x, u->y, u->z);
 
@@ -500,7 +478,7 @@ int Lgm_TraceLine2( Lgm_Vector *u, Lgm_Vector *v, double H0, double MinDist, dou
     ++n;
 
     if (n > LGM_MAX_INTERP_PNTS-1){
-	    printf("Warning: n > LGM_MAX_INTERP_PNTS-1 (%d)\n", LGM_MAX_INTERP_PNTS-1);
+        printf("Warning: n > LGM_MAX_INTERP_PNTS-1 (%d)\n", LGM_MAX_INTERP_PNTS-1);
     }
 
 
@@ -553,35 +531,27 @@ int Lgm_TraceLine2( Lgm_Vector *u, Lgm_Vector *v, double H0, double MinDist, dou
             ++Count;
         }
 
-
-
         R = Lgm_Magnitude( &P );
-	    F =  R - R0;
+        F =  R - R0;
         if ( R < WGS84_B/WGS84_A ){
-
             /*
              *  Guard against tracing into the Earth. Can happen if we
              *  overshoot the target radius.
              */
             if ( Info->VerbosityLevel > 0 ) printf("In File %s, Line %d: Below the surface of the Earth while tracing to get above the target height (R=%g)  -- bailing.\n", __FILE__, __LINE__, R ); 
             return(-1);
-
-	    } else if ( m > 5000 ) {
-
+        } else if ( m > 5000 ) {
             // Too many times through the loop!!!!
-	        v->x = v->y = v->z = 0.0;
+            v->x = v->y = v->z = 0.0;
             return(0);
-
         } else if (   (P.x > Info->OpenLimit_xMax) || (P.x < Info->OpenLimit_xMin) || (P.y > Info->OpenLimit_yMax) || (P.y < Info->OpenLimit_yMin)
-	               || (P.z > Info->OpenLimit_zMax) || (P.z < Info->OpenLimit_zMin) || (s > 1000.0) ) {
-	        /*
-	         *  Open FL!
-	         */
-	        v->x = v->y = v->z = 0.0;
-	        return(0);
-
+                   || (P.z > Info->OpenLimit_zMax) || (P.z < Info->OpenLimit_zMin) || (s > 1000.0) ) {
+            /*
+             *  Open FL!
+             */
+            v->x = v->y = v->z = 0.0;
+            return(0);
         } else if ( (ss > 0.0) && ((R-1.0) < Info->Lgm_TraceLine_Tol) ) {
-
             /*
              *  We have detected a change in sign for F, and we have gone some
              *  distance already, and we seem to be very close to surface of
@@ -593,9 +563,7 @@ int Lgm_TraceLine2( Lgm_Vector *u, Lgm_Vector *v, double H0, double MinDist, dou
             Rc = R;
             Fc = F;
             Sc = Sa + Hdid;
-
-	    } else if ( (ss < MinDist) || ( F > 0.0 ) ) { // keep on stepping
-
+        } else if ( (ss < MinDist) || ( F > 0.0 ) ) { // keep on stepping
             Pa = P;
             Fa = F;
             Ra = R;
@@ -617,25 +585,20 @@ int Lgm_TraceLine2( Lgm_Vector *u, Lgm_Vector *v, double H0, double MinDist, dou
                 Info->BminusBcdip[n] = Info->Bmag[n] - Lgm_Magnitude( &Bcdip );     // save field strength (and increment counter)
                 ++n;
             }
-
         } else {
-
             done = TRUE;
             Pc = P;
             Rc = R;
             Fc = F;
             Sc = Sa + Hdid;
-
         }
 
         if ( n > LGM_MAX_INTERP_PNTS-1 ) {
-
             printf("Lgm_TraceLine2(): Trying to add too many points to interpolation arrays - bailing.\n");
             return( -1 );
-
         }
 
-	    /*
+        /*
          *  We have been stepping along at a constant Htry. But when we get
          *  close to the end we do not want to drop below the surface of the
          *  Earth -- some models crash and burn if you do that. To make sure we
@@ -648,7 +611,7 @@ int Lgm_TraceLine2( Lgm_Vector *u, Lgm_Vector *v, double H0, double MinDist, dou
          *  points.  The final point will be the actual end of the FL. (I.e. we
          *  dont want all of these smaller steps cluttering up our array at the
          *  end.)
-	     */
+         */
         if ( Htry > (R-1.0) ) {
             Htry = 0.9*(R-1.0);
             SavePnt = FALSE;
@@ -675,12 +638,10 @@ int Lgm_TraceLine2( Lgm_Vector *u, Lgm_Vector *v, double H0, double MinDist, dou
 if (1==1){
     done  = FALSE;
     while (!done) {
-
-	    d = Sc - Sa;
-	    if ( fabs(d) < tol ) {
-	        done = TRUE;
-	    } else {
-
+        d = Sc - Sa;
+        if ( fabs(d) < tol ) {
+            done = TRUE;
+        } else {
             P = Pa; Htry = 0.5*d;
             if ( Lgm_MagStep( &P, &u_scale, Htry, &Hdid, &Hnext, sgn, &s, &reset, Info->Bfield, Info ) < 0 ) { printf("BAILING 5\n");return(-1);}
             R = Lgm_Magnitude( &P );
@@ -690,7 +651,7 @@ if (1==1){
             } else {
                 Pc = P; Fc = F; Sc = Sa + Hdid;
             }
-	    }
+        }
     }
 }
 if (0==1){
@@ -773,13 +734,13 @@ if (0==1){
      *  This will only make sense if these values are legitimate for this FL.
      *  Perhaps it would be better to force user to do this elesewhere.
      */
-    if ( AddBminPoint ) {
-        AddNewPoint( Info->Smin, Info->Bmin, &Info->Pmin, Info );
+    if (AddBminPoint) {
+        AddNewPoint(Info->Smin, Info->Bmin, &Info->Pmin, Info);
 //printf("2) ADDING NEW POINT\n");
 //printf("n, nPnts = %d %d\n", n, Info->nPnts);
     }
 
-    if ( Info->VerbosityLevel > 2 ) printf("Lgm_TraceLine2(): Number of Bfield evaluations = %ld\n", Info->Lgm_nMagEvals );
+    if (Info->VerbosityLevel > 2 ) printf("Lgm_TraceLine2(): Number of Bfield evaluations = %ld\n", Info->Lgm_nMagEvals );
 
     return( 1 );
 
@@ -1242,13 +1203,13 @@ int  SofBm( double Bm, double *ss, double *sn, Lgm_MagModelInfo *Info ) {
  */
 int Lgm_TraceLine3( Lgm_Vector *u, double S, int N, double sgn, double tol, int AddBminPoint, Lgm_MagModelInfo *Info ) {
 
-    Lgm_Vector	u_scale;
-    double	    Htry0, Htry, Hsum, Hdid, Hnext, Hmin, Hmax, s, ss;
-    double	    Sa=0.0, Sc=0.0, d;
-    double	    R0, R, Fa, Fb, Fc, F;
-    double	    Ra, Rb, Rc;
-    Lgm_Vector	Pa, Pc, P, Bvec, Bcdip;
-    int		    done, reset, n, SavePnt, DoneStep, nSubSteps;
+    Lgm_Vector u_scale;
+    double Htry0, Htry, Hsum, Hdid, Hnext, Hmin, Hmax, s, ss;
+    double Sa=0.0, Sc=0.0, d;
+    double R0, R, Fa, Fb, Fc, F;
+    double Ra, Rb, Rc;
+    Lgm_Vector Pa, Pc, P, Bvec, Bcdip;
+    int done, reset, n, SavePnt, DoneStep, nSubSteps;
 
     reset = TRUE;
 
@@ -1288,7 +1249,7 @@ int Lgm_TraceLine3( Lgm_Vector *u, double S, int N, double sgn, double tol, int 
     Info->BminusBcdip[n] = Info->Bmag[n] - Lgm_Magnitude( &Bcdip );     // save field strength (and increment counter)
     ++n;
     if (n > LGM_MAX_INTERP_PNTS){
-	    printf("Warning: n > LGM_MAX_INTERP_PNTS (%d)\n", LGM_MAX_INTERP_PNTS);
+        printf("Warning: n > LGM_MAX_INTERP_PNTS (%d)\n", LGM_MAX_INTERP_PNTS);
     }
 
 
@@ -1297,8 +1258,6 @@ int Lgm_TraceLine3( Lgm_Vector *u, double S, int N, double sgn, double tol, int 
     P = *u;
     if ( Info->VerbosityLevel > 2 ) printf("Lgm_TraceLine3(): P = %g %g %g (first point)\n", P.x, P.y, P.z );
     while ( !done ) {
-
-
         /*
          * Attempt to make a step of Htry0. Note that Lgm_MagStep() is adaptive,
          * so we arent guaranteed to actually get Htry0.  We need to examine
@@ -1311,21 +1270,17 @@ int Lgm_TraceLine3( Lgm_Vector *u, double S, int N, double sgn, double tol, int 
         nSubSteps = 0;
 
         while ( !DoneStep ) {
-
             if ( Lgm_MagStep( &P, &u_scale, Htry, &Hdid, &Hnext, sgn, &s, &reset, Info->Bfield, Info ) < 0 ) { 
                 printf("Problem in Lgm_MagStep(). File: %s, Line %d. BAILING 1\n", __FILE__, __LINE__ ); 
                 return(-1);
             }
-
             Hsum += Hdid;
 //if ( nSubSteps > 100 ){
 //printf("R = %lf km ( %lf Re)   P = %g %g %g   Hdid, Htry, Hnext  = %g %g %g AHA Problem in TraceLine3(). File: %s, Line %d. Too many substeps.  nSubSteps = %d\n", Re*Lgm_Magnitude(&P), Lgm_Magnitude(&P), P.x, P.y, P.z, Hdid, Htry, Hnext, __FILE__, __LINE__, nSubSteps ); 
 //}
-            //if ( fabs(Hdid-Htry) < 1e-7 ) {
             if ( fabs(Hsum-Htry0) < 1e-7 ) {
                 // we got what we asked for.
                 DoneStep = TRUE;
-            //} else if ( nSubSteps > 100 ) {
             } else if ( nSubSteps > 1000 ) {
                 DoneStep = TRUE;
                 printf("Problem in TraceLine3(). File: %s, Line %d. Too many substeps.  nSubSteps = %d\n", __FILE__, __LINE__, nSubSteps ); 
@@ -1341,8 +1296,6 @@ int Lgm_TraceLine3( Lgm_Vector *u, double S, int N, double sgn, double tol, int 
 
         ss += Hsum;  
         R  = Lgm_Magnitude( &P );
-
-
 
         if ( Info->VerbosityLevel > 2 ) {
             printf("Lgm_TraceLine3(): P = %g %g %g    R, s = %g %g    S = %g   Step n = %d of N = %d (Nsubsteps = %d)\n", P.x, P.y, P.z, R, ss, S, n, N, nSubSteps );
@@ -1376,9 +1329,10 @@ int Lgm_TraceLine3( Lgm_Vector *u, double S, int N, double sgn, double tol, int 
             /*
              *  Guard against cramming too many points into interpolation arrays
              */
-	    if ( Info->VerbosityLevel > 0 ) printf("%s, Line %d. Warning: n > LGM_MAX_INTERP_PNTS (%d)\n", __FILE__, __LINE__, LGM_MAX_INTERP_PNTS);
+            if ( Info->VerbosityLevel > 0 ) {
+                printf("%s, Line %d. Warning: n > LGM_MAX_INTERP_PNTS (%d)\n", __FILE__, __LINE__, LGM_MAX_INTERP_PNTS);
+            }
             return(-1);
-        //} else if ( fabs( S-ss ) < 2.0*tol ) {
         } else if ( fabs( S-ss ) < tol ) {
             done = TRUE;
         }
@@ -1441,8 +1395,8 @@ int Lgm_TraceLine3( Lgm_Vector *u, double S, int N, double sgn, double tol, int 
      *  This will only make sense if these values are legitimate for this FL.
      *  Perhaps it would be better to force user to do this elesewhere.
      */
-    if ( AddBminPoint ) {
-        printf("1) ADDING NEW POINT\n");
+    if (AddBminPoint) {
+        if (Info->VerbosityLevel >  1) printf("1) ADDING NEW POINT\n");
         // MUST ADD Bcdip for this too!
         AddNewPoint( Info->Smin, Info->Bmin, &Info->Pmin, Info );
     }
@@ -1452,7 +1406,6 @@ int Lgm_TraceLine3( Lgm_Vector *u, double S, int N, double sgn, double tol, int 
     if ( Info->VerbosityLevel > 2 ) printf("Lgm_TraceLine3(): Number of Bfield evaluations = %ld\n", Info->Lgm_nMagEvals );
 
     return( 1 );
-
 
 }
 
@@ -1467,20 +1420,20 @@ int Lgm_TraceLine3( Lgm_Vector *u, double S, int N, double sgn, double tol, int 
  */
 int Lgm_TraceLine4( Lgm_Vector *Pm_s, Lgm_Vector *Pm_n, double dSa, double dSb, int N, int AddBminPoint, Lgm_MagModelInfo *Info ) {
 
-    Lgm_Vector	u_scale;
-    double	    Htry, Hdid, Hnext, Hmin, Hmax, s, ss;
-    double	    Sa=0.0, Sc=0.0, d;
-    double	    R0, R, Fa, Fb, Fc, F;
-    double	    Ra, Rb, Rc;
-    Lgm_Vector	Pa, Pc, P, Bvec, Bcdip;
-    int		    done, reset, n, SavePnt;
+    Lgm_Vector u_scale;
+    double Htry, Hdid, Hnext, Hmin, Hmax, s, ss;
+    double Sa=0.0, Sc=0.0, d;
+    double R0, R, Fa, Fb, Fc, F;
+    double Ra, Rb, Rc;
+    Lgm_Vector Pa, Pc, P, Bvec, Bcdip;
+    int done, reset, n, SavePnt;
 
-    double      sgn, Bmag, Bmag_old, S;
-    int         n1, n2, nn;
-    double      *s1, *Px1, *Py1, *Pz1, *Bmag1, *BminusBcdip1;
-    Lgm_Vector  *Bvec1;
-    double      *s2, *Px2, *Py2, *Pz2, *Bmag2, *BminusBcdip2;
-    Lgm_Vector  *Bvec2;
+    double sgn, Bmag, Bmag_old, S;
+    int n1, n2, nn;
+    double *s1, *Px1, *Py1, *Pz1, *Bmag1, *BminusBcdip1;
+    Lgm_Vector *Bvec1;
+    double *s2, *Px2, *Py2, *Pz2, *Bmag2, *BminusBcdip2;
+    Lgm_Vector *Bvec2;
 
     LGM_ARRAY_1D( s1, N, double );
     LGM_ARRAY_1D( Px1, N, double );
@@ -1531,7 +1484,7 @@ int Lgm_TraceLine4( Lgm_Vector *Pm_s, Lgm_Vector *Pm_n, double dSa, double dSb, 
     BminusBcdip1[n1] = Bmag1[n1] - Lgm_Magnitude( &Bcdip );     // save field strength (and increment counter)
     ++n1;
     if (n1 > LGM_MAX_INTERP_PNTS){
-	    printf("Warning: n1 > LGM_MAX_INTERP_PNTS (%d)\n", LGM_MAX_INTERP_PNTS);
+        printf("Warning: n1 > LGM_MAX_INTERP_PNTS (%d)\n", LGM_MAX_INTERP_PNTS);
     }
 
 
@@ -1608,7 +1561,7 @@ int Lgm_TraceLine4( Lgm_Vector *Pm_s, Lgm_Vector *Pm_n, double dSa, double dSb, 
     BminusBcdip2[n2] = Bmag2[n2] - Lgm_Magnitude( &Bcdip );     // save field strength (and increment counter)
     ++n2;
     if (n2 > LGM_MAX_INTERP_PNTS){
-	    printf("Warning: n2 > LGM_MAX_INTERP_PNTS (%d)\n", LGM_MAX_INTERP_PNTS);
+        printf("Warning: n2 > LGM_MAX_INTERP_PNTS (%d)\n", LGM_MAX_INTERP_PNTS);
     }
 
 
@@ -1730,17 +1683,16 @@ int Lgm_TraceLine4( Lgm_Vector *Pm_s, Lgm_Vector *Pm_n, double dSa, double dSb, 
      *  This will only make sense if these values are legitimate for this FL.
      *  Perhaps it would be better to force user to do this elesewhere.
      */
-    if ( AddBminPoint ) {
-        printf("1) ADDING NEW POINT\n");
+    if (AddBminPoint) {
+        if (Info->VerbosityLevel > 1) printf("1) ADDING NEW POINT\n");
         // MUST ADD Bcdip for this too!
         AddNewPoint( Info->Smin, Info->Bmin, &Info->Pmin, Info );
     }
     //printf("1) F >>>>>>>>> Info->nPnts = %d <<<<<<<<<<\n", Info->nPnts);
 
 
-    if ( Info->VerbosityLevel > 2 ) printf("Lgm_TraceLine(): Number of Bfield evaluations = %ld\n", Info->Lgm_nMagEvals );
+    if (Info->VerbosityLevel > 2) printf("Lgm_TraceLine(): Number of Bfield evaluations = %ld\n", Info->Lgm_nMagEvals );
 
     return( 1 );
-
 
 }
