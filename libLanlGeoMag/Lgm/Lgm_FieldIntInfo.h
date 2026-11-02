@@ -1,5 +1,6 @@
 #include <math.h>
 #include "Lgm_QuadPack.h"
+#include "Lgm_Vec.h"
 #include "gsl/gsl_errno.h"
 #include "gsl/gsl_spline.h"
 

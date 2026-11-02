@@ -3,7 +3,7 @@
 #include <math.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_spline.h>
-
+#include "Lgm_CTrans.h"
 
 #ifndef M_2PI
 #define M_2PI            6.283185307179586476925286766559       /*  2PI           */

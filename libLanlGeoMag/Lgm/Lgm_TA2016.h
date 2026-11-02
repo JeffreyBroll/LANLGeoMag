@@ -4,7 +4,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-
+#include "Lgm/Lgm_CTrans.h"
+#include "Lgm/Lgm_Vec.h"
 /*
  * Define a structure to hold all of the info needed in TA16
  */
